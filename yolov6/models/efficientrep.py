@@ -21,23 +21,23 @@ class EfficientRep(nn.Module):
         assert num_repeats is not None
 
         self.stem = block(
-            in_channels=in_channels,
-            out_channels=channels_list[0],
+            in_channels=in_channels,#3
+            out_channels=channels_list[0],#32
             kernel_size=3,
             stride=2
-        )
+        )#茎
 
         self.ERBlock_2 = nn.Sequential(
             block(
-                in_channels=channels_list[0],
-                out_channels=channels_list[1],
+                in_channels=channels_list[0],#32
+                out_channels=channels_list[1],#64
                 kernel_size=3,
                 stride=2
             ),
             RepBlock(
-                in_channels=channels_list[1],
+                in_channels=channels_list[1],#64
                 out_channels=channels_list[1],
-                n=num_repeats[1],
+                n=num_repeats[1],#2
                 block=block,
             )
         )
@@ -74,13 +74,13 @@ class EfficientRep(nn.Module):
 
         self.ERBlock_5 = nn.Sequential(
             block(
-                in_channels=channels_list[3],
+                in_channels=channels_list[3],#256
                 out_channels=channels_list[4],
                 kernel_size=3,
                 stride=2,
             ),
             RepBlock(
-                in_channels=channels_list[4],
+                in_channels=channels_list[4],#512
                 out_channels=channels_list[4],
                 n=num_repeats[4],
                 block=block,

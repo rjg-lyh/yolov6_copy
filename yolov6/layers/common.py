@@ -192,7 +192,7 @@ class RepVGGBlock(nn.Module):
         if use_se:
             raise NotImplementedError("se block not supported yet")
         else:
-            self.se = nn.Identity()
+            self.se = nn.Identity()#既然没有SE模块，那么就给个占位
 
         if deploy:
             self.rbr_reparam = nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size, stride=stride,

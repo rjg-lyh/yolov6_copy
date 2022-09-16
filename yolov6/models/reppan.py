@@ -21,48 +21,48 @@ class RepPANNeck(nn.Module):
         assert num_repeats is not None
 
         self.Rep_p4 = RepBlock(
-            in_channels=channels_list[3] + channels_list[5],
-            out_channels=channels_list[5],
+            in_channels=channels_list[3] + channels_list[5],#256 + 128 = 384
+            out_channels=channels_list[5],#128
             n=num_repeats[5],
             block=block
         )
 
         self.Rep_p3 = RepBlock(
-            in_channels=channels_list[2] + channels_list[6],
-            out_channels=channels_list[6],
+            in_channels=channels_list[2] + channels_list[6],#128 + 64 
+            out_channels=channels_list[6],#64
             n=num_repeats[6],
             block=block
         )
 
         self.Rep_n3 = RepBlock(
-            in_channels=channels_list[6] + channels_list[7],
-            out_channels=channels_list[8],
+            in_channels=channels_list[6] + channels_list[7],#64 + 64
+            out_channels=channels_list[8],#128
             n=num_repeats[7],
             block=block
         )
 
         self.Rep_n4 = RepBlock(
-            in_channels=channels_list[5] + channels_list[9],
-            out_channels=channels_list[10],
+            in_channels=channels_list[5] + channels_list[9],#128 + 128
+            out_channels=channels_list[10],#256
             n=num_repeats[8],
             block=block
         )
 
         self.reduce_layer0 = SimConv(
-            in_channels=channels_list[4],
-            out_channels=channels_list[5],
+            in_channels=channels_list[4],#512
+            out_channels=channels_list[5],#128
             kernel_size=1,
             stride=1
         )
 
         self.upsample0 = Transpose(
-            in_channels=channels_list[5],
+            in_channels=channels_list[5],#128
             out_channels=channels_list[5],
         )
 
         self.reduce_layer1 = SimConv(
-            in_channels=channels_list[5],
-            out_channels=channels_list[6],
+            in_channels=channels_list[5],#128
+            out_channels=channels_list[6],#64
             kernel_size=1,
             stride=1
         )
@@ -73,15 +73,15 @@ class RepPANNeck(nn.Module):
         )
 
         self.downsample2 = SimConv(
-            in_channels=channels_list[6],
-            out_channels=channels_list[7],
+            in_channels=channels_list[6],#64
+            out_channels=channels_list[7],#64
             kernel_size=3,
             stride=2
         )
 
         self.downsample1 = SimConv(
-            in_channels=channels_list[8],
-            out_channels=channels_list[9],
+            in_channels=channels_list[8],#128
+            out_channels=channels_list[9],#128
             kernel_size=3,
             stride=2
         )
@@ -217,26 +217,26 @@ class CSPRepPANNeck(nn.Module):
 
     def forward(self, input):
 
-        (x2, x1, x0) = input
+        (x2, x1, x0) = input #c3, c4, c5
 
-        fpn_out0 = self.reduce_layer0(x0)
+        fpn_out0 = self.reduce_layer0(x0)#512 to 128
         upsample_feat0 = self.upsample0(fpn_out0)
-        f_concat_layer0 = torch.cat([upsample_feat0, x1], 1)
-        f_out0 = self.Rep_p4(f_concat_layer0)
+        f_concat_layer0 = torch.cat([upsample_feat0, x1], 1)# cat(128, 256)
+        f_out0 = self.Rep_p4(f_concat_layer0)#384 to 128
 
-        fpn_out1 = self.reduce_layer1(f_out0)
+        fpn_out1 = self.reduce_layer1(f_out0)#128 to 64
         upsample_feat1 = self.upsample1(fpn_out1)
-        f_concat_layer1 = torch.cat([upsample_feat1, x2], 1)
-        pan_out2 = self.Rep_p3(f_concat_layer1)
+        f_concat_layer1 = torch.cat([upsample_feat1, x2], 1)#cat(64, 128)
+        pan_out2 = self.Rep_p3(f_concat_layer1)#192 to 64 
 
-        down_feat1 = self.downsample2(pan_out2)
-        p_concat_layer1 = torch.cat([down_feat1, fpn_out1], 1)
-        pan_out1 = self.Rep_n3(p_concat_layer1)
+        down_feat1 = self.downsample2(pan_out2)#下采样
+        p_concat_layer1 = torch.cat([down_feat1, fpn_out1], 1)#cat(64, 64)
+        pan_out1 = self.Rep_n3(p_concat_layer1)#128 to 128
 
-        down_feat0 = self.downsample1(pan_out1)
-        p_concat_layer2 = torch.cat([down_feat0, fpn_out0], 1)
-        pan_out0 = self.Rep_n4(p_concat_layer2)
+        down_feat0 = self.downsample1(pan_out1)#下采样
+        p_concat_layer2 = torch.cat([down_feat0, fpn_out0], 1)#cat(128, 128)
+        pan_out0 = self.Rep_n4(p_concat_layer2)#256 to 256
 
-        outputs = [pan_out2, pan_out1, pan_out0]
+        outputs = [pan_out2, pan_out1, pan_out0]#64 128 256
 
         return outputs
